@@ -7,20 +7,20 @@ geojsonlink = "https://raw.githubusercontent.com/unoregami/Project_WayFinder/ref
 geojsondata = urllib.request.urlopen("https://raw.githubusercontent.com/unoregami/Project_WayFinder/refs/heads/main/pasay.json")   # Turn to HTTP request
 
 data = json.load(geojsondata)
-
 m = folium.Map(
     location=[14.442855, 120.995621],
     zoom_start=12
 )
-
-color = st.color_picker(" ",value="#529334", label_visibility="collapsed")
+with st.sidebar:
+    color = st.color_picker(" ",value="#529334", label_visibility="collapsed")
+    weight = st.slider(" ", min_value=1.0, max_value=10.0, value=5.0, step=0.1 ,label_visibility="collapsed")
 
 folium.GeoJson(
     geojsonlink,
     style_function=lambda feature: {
         "color": color,
         "fill": False,
-        "weight": 5
+        "weight": weight
     }
     ).add_to(m)
 
