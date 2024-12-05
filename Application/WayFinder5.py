@@ -11,8 +11,8 @@ import urllib.request, json
 # Load terminal data
 term = "https://github.com/unoregami/Project_WayFinder/raw/refs/heads/main/Terminal.xlsx"   # fetch terminal coordinates
 df = pd.read_excel(term)    # store in terminal coordinates
-client = openrouteservice.Client(key="5b3ce3597851110001cf62482e908b8b20fe4b22a13bb5230018deb1")    # openrouteservice client
-api_key = "AIzaSyDYf1vYZxJuJWPYhB24GdQ3n73-y1tLf14" #Google API key
+client = openrouteservice.Client(key="key")    # openrouteservice client
+api_key = "key" #Google API key
 geojsonlink = "https://raw.githubusercontent.com/unoregami/Project_WayFinder/refs/heads/main/pasay.json"    # From James Faeldon, https://github.com/faeldon/philippines-json-maps/blob/master/2023/geojson/provdists/hires/municities-provdist-1307600000.0.1.json
 geojsondata = urllib.request.urlopen("https://raw.githubusercontent.com/unoregami/Project_WayFinder/refs/heads/main/pasay.json")   # Turn to HTTP request
 data = json.load(geojsondata)   # Store json in data
