@@ -11,8 +11,8 @@ import urllib.request, json
 # Load terminal data
 term = "https://github.com/unoregami/Project_WayFinder/raw/refs/heads/main/Terminal.xlsx"   # fetch terminal coordinates
 df = pd.read_excel(term)    # store in terminal coordinates
-client = openrouteservice.Client(key="key")    # openrouteservice client
-api_key = "key" #Google API key
+client = openrouteservice.Client(key="5b3ce3597851110001cf62482e908b8b20fe4b22a13bb5230018deb1")    # openrouteservice client
+api_key = "AIzaSyDYf1vYZxJuJWPYhB24GdQ3n73-y1tLf14" #Google API key
 geojsonlink = "https://raw.githubusercontent.com/unoregami/Project_WayFinder/refs/heads/main/pasay.json"    # From James Faeldon, https://github.com/faeldon/philippines-json-maps/blob/master/2023/geojson/provdists/hires/municities-provdist-1307600000.0.1.json
 geojsondata = urllib.request.urlopen("https://raw.githubusercontent.com/unoregami/Project_WayFinder/refs/heads/main/pasay.json")   # Turn to HTTP request
 data = json.load(geojsondata)   # Store json in data
@@ -27,6 +27,33 @@ st.set_page_config(
     menu_items={"About": "https://github.com/unoregami/Project_WayFinder"}
     )
 
+def createBorder(m):    # creates border corresponding to the maximum and minimum coordinates of Las Piñas border
+    combined = data['features'][0]['geometry']['coordinates'][0][0] + (data['features'][0]['geometry']['coordinates'][1][0])
+    max_lng, min_lng = combined[0][0], combined[0][0]
+    max_lat, min_lat = combined[0][1], combined[0][1]
+
+    # Get the max and min of lng & lat
+    for coords in combined:     # Greedy approach
+        if coords[0] > max_lng:
+            max_lng = coords[0]
+        if coords[0] < min_lng:
+            min_lng = coords[0]
+        if coords[1] > max_lat:
+            max_lat = coords[1]
+        if coords[1] < min_lat:
+            min_lat = coords[1]
+
+    folium.CircleMarker(location=[max_lat, max_lng],).add_to(m)
+    folium.CircleMarker(location=[min_lat, min_lng],).add_to(m)
+    folium.CircleMarker(location=[max_lat, min_lng],).add_to(m)
+    folium.CircleMarker(location=[min_lat, max_lng],).add_to(m)
+
+    folium.PolyLine(
+        locations=[[max_lat, max_lng], [max_lat, min_lng], [min_lat, min_lng], [min_lat, max_lng], [max_lat, max_lng]],
+        color='blue',
+        weight=2,
+        opacity=0.8
+        ).add_to(m)
 
 def markerCreator(name, i, c , cluster):
     popup = folium.Popup(f"{i[0]}, {i[1]}")
@@ -38,7 +65,7 @@ def markerCreator(name, i, c , cluster):
     ).add_to(cluster)
 
 def plotRoad(map_obj, start_coords, end_coords, st_name, en_name):
-    # Fetch directions (route) from OpenRouteService
+    # Fetch directions (route) from OpenRouteService. Contraction Hierarchies uses greedy approach
     try:
         route = client.directions(
             coordinates=[list(reversed(start_coords)), list(reversed(end_coords))],
@@ -107,6 +134,30 @@ def get_coordinates(api_key, address):  # Fetch coordinates using Google Maps AP
 #---------------------------------------------------------------------------------------------------------------------------------------
 
 def main():
+    # Logo sizing
+    st.html("""
+            <style>
+            [alt=Logo] {
+            height: 5rem;
+            }
+            </style>
+            """)
+    st.logo('https://raw.githubusercontent.com/unoregami/Project_WayFinder/refs/heads/main/no%20bg.png', size="large")
+
+    # Initialize map
+    min_lat, max_lat = 14.374852788000055, 14.49011177400007       #Border of Las Piñas
+    min_lon, max_lon = 120.96595096500006, 121.02434019200008
+    m = folium.Map(
+        max_bounds=True,
+        location=[14.442855, 120.995621],
+        zoom_start=12,
+        min_zoom=12,
+        min_lat=min_lat,
+        min_lon=min_lon,
+        max_lat=max_lat,
+        max_lon=max_lon
+    )
+
     with st.sidebar:
         #Segmented Control Buttons
         #Choose a terminal
@@ -128,31 +179,9 @@ def main():
         color = st.color_picker(" ",value="#529334", label_visibility="collapsed")
         weight = st.slider(" ", min_value=1.0, max_value=10.0, value=5.0, step=0.1 ,label_visibility="collapsed")
 
-    
-
-    # Logo sizing
-    st.html("""
-            <style>
-            [alt=Logo] {
-            height: 5rem;
-            }
-            </style>
-            """)
-    st.logo('https://raw.githubusercontent.com/unoregami/Project_WayFinder/refs/heads/main/no%20bg.png', size="large")
-
-    # Initialize map
-    min_lat, max_lat = 14.386249, 14.4928       #Border of Las Piñas
-    min_lon, max_lon = 120.957296, 121.03017
-    m = folium.Map(
-        max_bounds=True,
-        location=[14.442855, 120.995621],
-        zoom_start=12,
-        #min_zoom=12,
-        #min_lat=min_lat,
-        #min_lon=min_lon,
-        #max_lat=max_lat,
-        #max_lon=max_lon
-    )
+        isMaxBorder = st.toggle("Show max border", value=False)
+        if isMaxBorder:
+            createBorder(m)
 
     # Add LatLngPopup for clicking
     m.add_child(folium.LatLngPopup())
